@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Sep 21 10:46:29 2024
+"""
+
+# 1. Library imports
+import uvicorn
+from fastapi import FastAPI
+from DiseaseImage import DiseaseImage  # Pydantic BaseModel to handle image URLs
+
+import os
+import json
+import numpy as np
+from PIL import Image
+import tensorflow as tf
+import requests
+from io import BytesIO
+from fastapi.middleware.cors import CORSMiddleware
+
+# 2. Create the app object
+app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins or restrict this to ['http://localhost:3000']
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
+
+
+# 3. Define the model directory path and load the trained model
+working_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = f"{working_dir}/trained_model/plant_disease_prediction_model.h5"
+model = tf.keras.models.load_model(model_path)
+
+# 4. Load the class indices (mapping of labels)
+class_indices = json.load(open(f"{working_dir}/trained_model/class_indices.json"))
+
+# 5. Function to download and preprocess the image from a URL or file path
+def load_and_preprocess_image(image_path_or_url, target_size=(224, 224)):
+    if image_path_or_url.startswith('http'):
+        # If image path is a URL, download the image using requests
+        response = requests.get(image_path_or_url)
+        img = Image.open(BytesIO(response.content))
+    else:
+        # If the image path is local, open the image file
+        img = Image.open(image_path_or_url)
+
+    # Resize the image to match the input shape of the model (224x224)
+    img = img.resize(target_size)
+    
+    # Convert the image to a numpy array
+    img_array = np.array(img)
+    
+    # Add batch dimension (1, height, width, channels)
+    img_array = np.expand_dims(img_array, axis=0)
+    
+    # Normalize the pixel values to [0, 1] (assuming the model was trained with normalized values)
+    img_array = img_array.astype('float32') / 255.0
+    
+    return img_array
+
+# 6. Function to predict the class of an image
+def predict_image_class(model, image_path_or_url, class_indices):
+    # Preprocess the image
+    preprocessed_img = load_and_preprocess_image(image_path_or_url)
+    
+    # Predict using the loaded model
+    predictions = model.predict(preprocessed_img)
+    
+    # Get the index of the predicted class
+    predicted_class_index = np.argmax(predictions, axis=1)[0]
+    
+    # Map the predicted index to the corresponding class name
+    predicted_class_name = class_indices[str(predicted_class_index)]
+    
+    return predicted_class_name
+
+# 7. Root endpoint to check if the API is running
+@app.get('/')
+def index():
+    return {'message': 'Hello, the Plant Disease Detection API is up and running!'}
+
+# 8. Disease detection endpoint
+@app.post('/detect')
+def detect_disease(data: DiseaseImage):
+    # Get the image URL from the request body
+    image_url = data.image
+    
+    # Predict the disease based on the image
+    prediction = predict_image_class(model, image_url, class_indices)
+    
+    # Return the predicted disease class
+    return {
+        'prediction': prediction
+    }
+
+# 9. Start the FastAPI server when the script is run
+if __name__ == '__main__':
+    uvicorn.run(app, host='127.0.0.1', port=8000)
+# To run: uvicorn main:app --reload

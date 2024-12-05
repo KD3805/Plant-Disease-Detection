@@ -1,0 +1,44 @@
+-> FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.6+ based on standard Python type hints.
+
+
+-> FastAPI has high performance and it is fast, on par with NodeJS and Go (thanks to Starlette and Pydantic).
+
+	-> Pydantic is data validation and settings management using python type annotation. It is used to send parameters from frontend to api.
+
+
+-> FastAPI uses ASGI (Asynchronous Server Gateway Interface).
+
+	-> ASGI, or Asynchronous Server Gateway Interface, is a standard interface that allows web servers to communicate with web applications and frameworks. 
+
+	-> It's designed to support asynchronous and concurrent processing, which allows web applications to handle multiple requests at the same time.
+
+	-> In order to implement ASGI, we have to use 'uvicorn' (uvicorn is an ASGI server).
+
+
+
+# Execution:
+
+1. Open Anaconda prompt:
+
+2. Create virtual environment:
+	i) pip install virtualenv
+	ii) virtualenv myenv
+			OR
+	-> python -m venv myenv
+
+3. Activate virtual environment:
+	i) myenv\Scripts\activate
+
+4. Install required libraries:
+	-> pip install fastapi uvicorn
+
+5. Move to the actual folder, where 'main.py' file is stored:
+	e.g. - cd D:\Learning medium\ML\FastAPI
+
+6. Run the server:
+	-> uvicorn <file_name>:<obj_name> --reload
+	e.g. - uvicorn main:app --reload
+
+
+##### https://www.kaggle.com/datasets/kamipakistan/plant-diseases-detection-dataset
+##### Plant Leaf Disease Detection GUI

@@ -1,0 +1,1 @@
+Created a deep learning project that uses a CNN model to accurately predict plant diseases from uploaded images. Deployed the model using FastAPI, ensuring seamless integration with a user-friendly GUI. Demonstrated skills in model deployment, API development, and machine learning.
